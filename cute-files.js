@@ -4,7 +4,7 @@ var path = require('path');
 var express = require('express');
 var contentDisposition = require('content-disposition');
 var pkg = require( path.join(__dirname, 'package.json') );
-
+var fs = require("fs");
 var scan = require('./scan');
 
 
@@ -14,17 +14,25 @@ var program = require('commander');
 
 program
 	.version(pkg.version)
+	.option('-d, --directory </path/to/directory/>', 'Directory pathname to serve (defaults to your current directory)')
 	.option('-p, --port <port>', 'Port on which to listen to (defaults to 3000)', parseInt)
 	.parse(process.argv);
 
 var port = program.port || 3000;
+var directory = program.directory;
 
+try {
+    fs.lstatSync(directory).isDirectory();
+} 
+catch(e) {
+    directory = '.';
+}
 
 // Scan the directory in which the script was called. It will
 // add the 'files/' prefix to all files and folders, so that
 // download links point to our /files route
 
-var tree = scan('.', 'files');
+var tree = scan(directory, 'files');
 
 
 // Ceate a new express app
@@ -59,4 +67,4 @@ app.get('/scan', function(req,res){
 
 app.listen(port);
 
-console.log('Cute files is running on port ' + port);
+console.log('Cute files is serving ' + directory + ' on port ' + port);
